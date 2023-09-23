@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+
+# Written By Woland
+
+# backup directories and send them to telegram
+
+#Dependency:
+#          bot token
+#          chat id
+#          tar
+
+# https://github.com/wolandark
+# https://github.com/wolandark/BASH_Scripts_For_Everyone
+
+# Usage:
+#          see README
+#########################################################
+#                   W-Backup By Woland                  #
+#########################################################
+
+# Display help msg
+if [[ $1 == -h ]]; then
+    cat README.txt
+    exit 0
+fi
+
+# store token and chat id, if config is missing prompt the user
+config_file="backup_config.txt"
+if [ -f "$config_file" ]; then
+    source "$config_file"
+else
+    echo "Config file not found. Please provide your bot token and chat ID."
+    echo "Bot token: "
+    read -r tk
+    echo "Chat ID: "
+    read -r chatid
+    # Save the values to the config file
+    echo "tk=\"$tk\"" > "$config_file"
+    echo "chatid=\"$chatid\"" >> "$config_file"
+fi
+
+# Caption the msg from the bot
+echo "Caption for backup?"
+read -r caption
+# this op is not breaking
+if  [[ -z "$caption" ]]; then
+    echo "Caption is empty, proceeding ..."
+fi
+
+# Backup the specified directories
+tar -cvf backup.tar "$@"
+
+# send backup to telegram
+curl -F chat_id="${chatid}" -F caption="${caption}" -F parse_mode="HTML" -F document=@"backup.tar" https://api.telegram.org/bot${tk}/sendDocument
+
+echo -e "\n\t\t\033[1;7;32mDone! Check Your Telegram\033[0m"
